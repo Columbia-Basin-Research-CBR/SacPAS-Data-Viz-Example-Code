@@ -1,0 +1,232 @@
+---
+title: "River Conditions and Fish Data & Figures"
+subtitle: "Example code in R with custom query urls from SacPAS (cbr.washington.edu/sacramento/)"
+author: "SacPAS Team, Columbia Basin Research, Aquatic & Fishery Sciences, University of Washington"
+format:
+  html:
+    code-fold: true
+    code-tools: true
+    toc: true
+    toc-location: left
+    toc-depth: 3
+    toc-expand: 1
+    smooth-scroll: true
+editor: visual
+---
+
+# Summary
+
+This Quarto html vignette and provides example R code for: 1) accessing data from SacPAS (Central Valley Prediction and Assessment of Salmon; [cbr.washintgon.edu/sacramento/](https://cbr.washington.edu/sacramento/)) via custom query urls, and 2) generating figures using these data. We start with simple examples and progress to slightly more complex figures and integrated data sets. We focus on data on River Conditions ([cbr.washington.edu/sacramento/data/query_river_graph.html](https://cbr.washington.edu/sacramento/data/query_river_graph.html)) and Fishes ([cbr.washington.edu/sacramento/data/query_sampling_graph.html](https://cbr.washington.edu/sacramento/data/query_sampling_graph.html)). The custom query urls can be copied from the SacPAS query tools by clickling the option and submitting the query:
+
+![](images/image_check_mark_query_url.png){fig-alt="Screenshot of a SacPAS query tool section with the \"Submit Query\" button, \"Reset\" button, and checkmark option for \"Generate query url\"." fig-align="center"}
+
+R code blocks in this Quarto html vignette also provide examples of query url strings that can be further customized.
+
+# R library packages
+
+```{r}
+#| label: rpackages
+#| message: false
+#| warning: false
+#| code-fold: false
+#| code-folding: true
+#| code-summary: "Show the code"
+
+# Names of packages to install and/or load
+pkgs<-c("here", "tidyverse", "dplyr", "readr", "lubridate")
+
+# Install packages if not already installed
+# Load library packages
+if(length(setdiff(pkgs,rownames(installed.packages())))>0) {install.packages(setdiff(pkgs,rownames(installed.packages())),dependencies=TRUE)}
+invisible(lapply(pkgs,library,character.only=T))
+
+```
+
+# River Conditions
+
+## Daily Data in one year
+
+```{r}
+#| label: river-temp-single-year
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-folding: true
+#| code-summary: "Show the code"
+
+# Choose year and site, and create custom query url
+year <- "2025"
+site <- "KWK"
+temp_unit <- "F" # or could be "C"
+my_url <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=", temp_unit, "&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
+
+# Download the data
+river_temp_data <- readr::read_csv(my_url)
+
+# Read and save data notes
+print(generate_note <- as.character(
+  river_temp_data[(nrow(river_temp_data)-1),1]))
+print(citation_note <- as.character(
+  river_temp_data[(nrow(river_temp_data)),1]))
+
+# Remove the Notes from data set
+river_temp_data <- head(river_temp_data, -3)
+
+# Data wrangling
+# Date
+river_temp_data <- river_temp_data |>
+  mutate(date = ymd(str_c(year, `mm-dd`, sep = "-")))
+  
+
+
+# Plot the data
+if(temp_unit == "F") {
+  ggplot(river_temp_data, aes(x = date, y = value)) +
+    geom_line(color = "steelblue", linewidth = 0.75) +
+    geom_point(color = "steelblue", size = 1) + 
+    labs(
+      title = paste("Daily river temperature at", site, "in", year),
+      x = "Date",
+      y = expression(paste("River temperature (", degree, "F)"))
+    ) 
+} else {
+  ggplot(river_temp_data, aes(x = date, y = value)) +
+    geom_line(color = "steelblue", linewidth = 0.75) +
+    geom_point(color = "steelblue", size = 1) + 
+    labs(
+      title = paste("Daily river temperature at", site, "in", year),
+      x = "Date",
+      y = expression(paste("River temperature (", degree, "F)"))
+    ) 
+}
+
+
+```
+
+## Start and End Dates
+
+```{r}
+#| label: river-temp-start-end-dates
+#| message: false
+#| warning: false
+#| code-fold: true
+#| echo: false
+
+
+
+
+```
+
+## Multiple years (with legend)
+
+```{r}
+#| label: river-temp-multiple-years-legend
+#| message: false
+#| warning: false
+#| code-fold: true
+#| echo: false
+
+
+
+
+```
+
+## Multiple Years (facet plots)
+
+```{r}
+#| label: river-temp-multiple-years-facet
+#| message: false
+#| warning: false
+#| code-fold: true
+#| echo: false
+
+
+
+
+```
+
+## Multiple River Data Sets
+
+```{r}
+#| label: river-conditions-data-integrated
+#| message: false
+#| warning: false
+#| code-fold: true
+#| echo: false
+
+
+
+
+```
+
+# Fish Data
+
+## Rotary Screw Trap
+
+```{r}
+#| label: fish-rst
+#| message: false
+#| warning: false
+#| code-fold: true
+#| echo: false
+
+
+
+
+```
+
+## Trawl
+
+```{r}
+#| label: fish-trawl
+#| message: false
+#| warning: false
+#| code-fold: true
+#| echo: false
+
+
+
+
+```
+
+## Loss and Salvage
+
+```{r}
+#| label: fish-loss-salvage
+#| message: false
+#| warning: false
+#| code-fold: true
+#| echo: false
+
+
+
+
+```
+
+## JPE
+
+```{r}
+#| label: fish-jpe
+#| message: false
+#| warning: false
+#| code-fold: true
+#| echo: false
+
+
+
+
+```
+
+## Aerial and Carcass Surveys
+
+```{r}
+#| label: fish-aerial-carcass
+#| message: false
+#| warning: false
+#| code-fold: true
+#| echo: false
+
+
+
+
+```
