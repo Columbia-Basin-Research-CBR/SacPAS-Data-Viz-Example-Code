@@ -33,7 +33,7 @@ R code blocks in this Quarto html vignette also provide examples of query url st
 #| code-summary: "Show the code"
 
 # Names of packages to install and/or load
-pkgs<-c("here", "tidyverse", "dplyr", "readr", "lubridate")
+pkgs<-c("here", "tidyverse", "dplyr", "readr", "lubridate", "viridis", "ggplot2")
 
 # Install packages if not already installed
 # Load library packages
@@ -112,12 +112,14 @@ if(temp_unit == "F") {
 #| code-fold: true
 #| echo: false
 
-# Choose year and site, and create custom query url
+# Choose year, site, start and end dates, unit, and create custom query url
 year <- "2025"
 site <- "KWK"
 start_date <- "4%2F1"
 end_date <- "10%2F31"
-my_url <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=F&startdate=", start_date, "&enddate=", end_date, "&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
+temp_unit <- "F" # or could be "C"
+
+my_url <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=", temp_unit, "&startdate=", start_date, "&enddate=", end_date, "&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
 
 # Download the data
 river_temp_data <- readr::read_csv(my_url)
@@ -131,137 +133,244 @@ river_temp_data <- river_temp_data |>
   mutate(date = ymd(str_c(year, `mm-dd`, sep = "-")))
 
 # Plot the data
-ggplot(river_temp_data, aes(x = date, y = value)) +
+if(temp_unit == "F") {
+  ggplot(river_temp_data, aes(x = date, y = value)) +
   geom_line(color = "steelblue", linewidth = 0.75) +
   geom_point(color = "steelblue", size = 1) + 
   labs(
-    title = paste("Daily river temperature at", site, "in", year, "from April 1st to October 31st"),
+    title = paste("Daily river temperature at", site, "in", year),
     x = "Date",
     y = expression(paste("River temperature (", degree, "F)"))
   )
+} else {
+  ggplot(river_temp_data, aes(x = date, y = value)) +
+    geom_line(color = "steelblue", linewidth = 0.75) +
+    geom_point(color = "steelblue", size = 1) + 
+    labs(
+      title = paste("Daily river temperature at", site, "in", year),
+      x = "Date",
+      y = expression(paste("River temperature (", degree, "C)"))
+    )
+}
 
 ```
 
 ## Multiple years (with legend)
 
-```{r}
+```{r, fig.height=5, fig.width=6}
 #| label: river-temp-multiple-years-legend
 #| message: false
 #| warning: false
 #| code-fold: true
 #| echo: false
 
-# Pull in data for years 2024, 2025, and 2026 
-year <- "2024"
-site <- "KWK"
-my_url_2024 <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=F&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
-
-year <- "2025"
-site <- "KWK"
-my_url_2025 <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=F&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
-
-year <- "2026"
-site <- "KWK"
-my_url_2026 <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=F&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
-
-# Data-cleaning function
-prepare_data <- function(my_url) {
-  river_temp_data <- readr::read_csv(my_url)
-  river_temp_data <- head(river_temp_data, -3)
-  river_temp_data <- river_temp_data |>
-    mutate(date = ymd(str_c(2000, `mm-dd`, sep = "-")))
-  river_temp_data
+# Build a function
+riv_temp_url_fn <- function(year, site, temp_unit) {
+  paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=", temp_unit, "&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
 }
 
-# Clean the data from each query call
-river_temp_data_2024 <- prepare_data(my_url_2024)
-river_temp_data_2025 <- prepare_data(my_url_2025)
-river_temp_data_2026 <- prepare_data(my_url_2026)
+# Pull in data for years 2023, 2024, and 2025
+my_url_2023 <- riv_temp_url_fn(year = "2023", site = "KWK", temp_unit = "F")
+river_temp_data_2023 <-  readr::read_csv(my_url_2023)
+river_temp_data_2023 <- head(river_temp_data_2023, -3)
+  
+my_url_2024 <- riv_temp_url_fn(year = "2024", site = "KWK", temp_unit = "F")
+river_temp_data_2024 <-  readr::read_csv(my_url_2024)
+river_temp_data_2024 <- head(river_temp_data_2024, -3)
 
-# Combine rows into a single data frame
-river_temp_data <- bind_rows(river_temp_data_2024, river_temp_data_2025, river_temp_data_2026)
+my_url_2025 <- riv_temp_url_fn(year = "2025", site = "KWK", temp_unit = "F")
+river_temp_data_2025 <-  readr::read_csv(my_url_2025)
+river_temp_data_2025 <- head(river_temp_data_2025, -3)
+
+river_temp_data <- bind_rows(river_temp_data_2023, river_temp_data_2024, river_temp_data_2025)
+
+
+river_temp_data <- river_temp_data %>%
+  mutate(date = paste(year, `mm-dd`, sep = "-"),
+         date = ymd(date), 
+         year = factor(year), 
+         month = format(date, "%m"), 
+         day = yday(date))
 
 # Plot the data
-ggplot(river_temp_data, aes(x = date, y = value, color = factor(year))) +
-  geom_line(linewidth = 0.75) +
-  geom_point(size = 1) +
-  scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+if(temp_unit == "F") {
+  ggplot(river_temp_data, aes(x = day, y = value, color = year)) +
+  geom_line(linewidth = 0.75)+
+  geom_point(size = 0.5) + 
+  scale_x_date(date_breaks = "1 month", date_labels = "%b") + 
   labs(
-    title = paste("Daily river temperature at", site, "from 2024-2026"),
-    x = "Month",
-    y = expression(paste("River temperature (", degree, "F)")),
-    color = "Year"
-  )
+    title = paste("Daily river temperature at", site),
+    x = "Date",
+    y = expression(paste("River temperature (", degree, "F)"))
+  ) + scale_color_viridis_d(option = "civids") + theme_bw()
+} else {
+  ggplot(river_temp_data, aes(x = day, y = value, color = year)) +
+    geom_line(linewidth = 0.75)+
+    geom_point(size = 0.5) + 
+    scale_x_date(date_breaks = "1 month", date_labels = "%b") + 
+    labs(
+      title = paste("Daily river temperature at", site),
+      x = "Date",
+      y = expression(paste("River temperature (", degree, "C)"))
+    ) + scale_color_viridis_d(option = "cividis") + theme_bw()
+}
 
 ```
 
 ## Multiple Years (facet plots)
 
-```{r}
+```{r, fig.height=8, fig.width=6}
 #| label: river-temp-multiple-years-facet
 #| message: false
 #| warning: false
 #| code-fold: true
 #| echo: false
 
-# Pull in data for years 2024, 2025, and 2026 
-year <- "2024"
-site <- "KWK"
-my_url_2024 <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=F&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
-
-year <- "2025"
-site <- "KWK"
-my_url_2025 <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=F&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
-
-year <- "2026"
-site <- "KWK"
-my_url_2026 <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=F&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
-
-# Data-cleaning function
-prepare_data <- function(my_url) {
-  river_temp_data <- readr::read_csv(my_url)
-  river_temp_data <- head(river_temp_data, -3)
-  river_temp_data <- river_temp_data |>
-    mutate(date = ymd(str_c(2000, `mm-dd`, sep = "-")))
-  river_temp_data
+# Build a function
+riv_temp_url_fn <- function(year, site, temp_unit) {
+  paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=", temp_unit, "&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
 }
 
-# Clean the data from each query call
-river_temp_data_2024 <- prepare_data(my_url_2024)
-river_temp_data_2025 <- prepare_data(my_url_2025)
-river_temp_data_2026 <- prepare_data(my_url_2026)
+# Pull in data for years 2023, 2024, and 2025
+my_url_2023 <- riv_temp_url_fn(year = "2023", site = "KWK", temp_unit = "F")
+river_temp_data_2023 <-  readr::read_csv(my_url_2023)
+river_temp_data_2023 <- head(river_temp_data_2023, -3)
 
-# Combine rows into a single data frame
-river_temp_data <- bind_rows(river_temp_data_2024, river_temp_data_2025, river_temp_data_2026)
+my_url_2024 <- riv_temp_url_fn(year = "2024", site = "KWK", temp_unit = "F")
+river_temp_data_2024 <-  readr::read_csv(my_url_2024)
+river_temp_data_2024 <- head(river_temp_data_2024, -3)
+
+my_url_2025 <- riv_temp_url_fn(year = "2025", site = "KWK", temp_unit = "F")
+river_temp_data_2025 <-  readr::read_csv(my_url_2025)
+river_temp_data_2025 <- head(river_temp_data_2025, -3)
+
+river_temp_data <- bind_rows(river_temp_data_2023, river_temp_data_2024, river_temp_data_2025)
+
+
+river_temp_data <- river_temp_data %>%
+  mutate(date = paste(year, `mm-dd`, sep = "-"),
+         date = ymd(date), 
+         year = factor(year))
 
 # Plot the data
-ggplot(river_temp_data, aes(x = date, y = value, color = factor(year))) +
-  geom_line(linewidth = 0.75) +
-  geom_point(size = 1) +
-  scale_x_date(date_labels = "%b", date_breaks = "3 month") +
-  labs(
-    title = paste("Daily river temperature at", site, "from 2024-2026"),
-    x = "Month",
-    y = expression(paste("River temperature (", degree, "F)")),
-    color = "Year"
-  ) +
-  facet_wrap(~ year)
-
+if(temp_unit == "F") {
+  ggplot(river_temp_data, aes(x = date, y = value, color = factor(year))) +
+    geom_line(color = "steelblue", linewidth = 0.75) +
+    geom_point(color = "steelblue", size = 1) + 
+    facet_wrap(~year, scales = "free", nrow = 3, dir = "v") + 
+    scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+    labs(
+      title = paste("Daily river temperature at", site),
+      x = "Date",
+      y = expression(paste("River temperature (", degree, "F)"))
+    ) + theme(legend.position = "none") 
+} else {
+  ggplot(river_temp_data, aes(x = date, y = value, color = factor(year))) +
+    geom_line(color = "steelblue", linewidth = 0.75) +
+    geom_point(color = "steelblue", size = 1) + 
+    facet_wrap(~year, scales = "free", nrow = 3, dir = "v") + 
+    scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+    labs(
+      title = paste("Daily river temperature at", site),
+      x = "Date",
+      y = expression(paste("River temperature (", degree, "C)"))
+    ) + theme(legend.position = "none")
+} 
 
 ```
 
 ## Multiple River Data Sets
 
-```{r}
+```{r, fig.height=8, fig.width=6}
 #| label: river-conditions-data-integrated
 #| message: false
 #| warning: false
 #| code-fold: true
 #| echo: false
 
+# Build functions
+riv_temp_url_fn <- function(year, site, temp_unit) {
+  paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=", temp_unit, "&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
+}
 
+riv_flow_url_fn <- function(year, site) {
+    paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=Flow&tempUnit=F&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
+}
 
+riv_turbidity_url_fn <- function(year, site) {
+  paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=Turbidity&tempUnit=F&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
+}
 
+riv_dissolved_oxyg_url_fn <- function(year, site) {
+  paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=DissolvedOxygen&tempUnit=F&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
+}
+
+# year and location
+year = "2025"
+site = "KWK"
+
+# Download the river temperature data
+## build url
+riv_temp_url <- riv_temp_url_fn(year = year, site = site, temp_unit = "F")
+## download data
+riv_temp_data <- readr::read_csv(riv_temp_url)
+## read the data Note and then remove from data set
+riv_temp_data <- head(riv_temp_data, -3)
+riv_temp_data$unit <- as.character(riv_temp_data$unit)
+
+# Download the river discharge data
+## build url
+riv_flow_url <- riv_flow_url_fn(year = year, site = site)
+## download data
+riv_flow_data <- readr::read_csv(riv_flow_url)
+## read the data Note and then remove from data set
+riv_flow_data <- head(riv_flow_data, -3)
+
+# Download the river turbidity data
+## build url
+riv_turbidity_url <- riv_turbidity_url_fn(year = year, site = site)
+## download data
+riv_turbidity_data <- readr::read_csv(riv_turbidity_url)
+## read the data Note and then remove from data set
+riv_turbidity_data <- head(riv_turbidity_data, -3)
+
+# Download the river dissolved oxygen data
+## build url
+riv_dissolved_oxyg_url <- riv_dissolved_oxyg_url_fn(year = year, site = site)
+## download data
+riv_dissolved_oxyg_data <- readr::read_csv(riv_dissolved_oxyg_url)
+## read the data Note and then remove from data set
+riv_dissolved_oxyg_data <- head(riv_dissolved_oxyg_data, -3)
+
+river_data <- bind_rows(riv_temp_data, 
+                        riv_flow_data, 
+                        riv_turbidity_data, 
+                        riv_dissolved_oxyg_data) %>%
+  mutate(date = paste(year, `mm-dd`, sep = "-"),
+         date = ymd(date), 
+         datatype = factor(datatype))
+
+ggplot(river_data, aes(x = date, y = value)) +
+  geom_line(color = "steelblue", linewidth = 0.75) +
+  geom_point(color = "steelblue", size = 1) + 
+  facet_wrap(~datatype, scales = "free", ncol = 1, nrow = 4,
+             strip.position = "left",
+             labeller = as_labeller( c(
+               WaterTemperature = "Temperature (degrees C)",
+               Flow = "Flow (CFS)", 
+               Turbidity = "Turbidity (NTU|FNU)",
+               DissolvedOxygen = "Dissolved Oxygen (mg/L)") ) ) + 
+  scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+  ylab(NULL) +
+  labs(
+    title = paste("Daily river conditions at", site, "in", year),
+    x = "Date") + 
+  theme(
+    strip.placement = "outside",
+    strip.background = element_blank(),
+    axis.title.y = element_blank()
+  )
+  
 ```
 
 # Fish Data
