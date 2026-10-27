@@ -14,11 +14,11 @@ format:
 editor: visual
 ---
 
-# Summary
+# Background
 
 This Quarto html vignette and provides example R code for: 1) accessing data from SacPAS (Central Valley Prediction and Assessment of Salmon; [cbr.washintgon.edu/sacramento/](https://cbr.washington.edu/sacramento/)) via custom query urls, and 2) generating figures using these data. We start with simple examples and progress to slightly more complex figures and integrated data sets. We focus on data on River Conditions ([cbr.washington.edu/sacramento/data/query_river_graph.html](https://cbr.washington.edu/sacramento/data/query_river_graph.html)) and Fishes ([cbr.washington.edu/sacramento/data/query_sampling_graph.html](https://cbr.washington.edu/sacramento/data/query_sampling_graph.html)). The custom query urls can be copied from the SacPAS query tools by clickling the option and submitting the query:
 
-![](images/image_check_mark_query_url.png){fig-alt="Screenshot of a SacPAS query tool section with the \"Submit Query\" button, \"Reset\" button, and checkmark option for \"Generate query url\"." fig-align="center"}
+![](../images_diagrams/image_check_mark_query_url.png){fig-alt="Screenshot of a SacPAS query tool section with the \"Submit Query\" button, \"Reset\" button, and checkmark option for \"Generate query url\"." fig-align="center"}
 
 R code blocks in this Quarto html vignette also provide examples of query url strings that can be further customized.
 
@@ -33,7 +33,7 @@ R code blocks in this Quarto html vignette also provide examples of query url st
 #| code-summary: "Show the code"
 
 # Names of packages to install and/or load
-pkgs<-c("here", "tidyverse", "dplyr", "readr", "lubridate", "viridis", "ggplot2")
+pkgs<-c("here", "tidyverse", "dplyr", "readr", "lubridate", "viridis", "ggplot2", "scales", "knitr")
 
 # Install packages if not already installed
 # Load library packages
@@ -51,14 +51,18 @@ invisible(lapply(pkgs,library,character.only=T))
 #| message: false
 #| warning: false
 #| code-fold: true
-#| code-folding: true
 #| code-summary: "Show the code"
 
 # Choose year and site, and create custom query url
 year <- "2025"
 site <- "KWK"
 temp_unit <- "F" # or could be "C"
-my_url <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All&year%5B%5D=", year, "&loc%5B%5D=", site, "&data%5B%5D=WaterTemperature&tempUnit=", temp_unit, "&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
+my_url <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/mg.php?sc=1&mgconfig=river&outputFormat=csvSingle&hafilter=All",
+          "&year%5B%5D=", year,
+          "&loc%5B%5D=", site,
+          "&data%5B%5D=WaterTemperature",
+          "&tempUnit=", temp_unit,
+          "&startdate=1%2F1&enddate=12%2F31&avgyear=0&consolidate=1&grid=1&y1min=&y1max=&y2min=&y2max=&size=large&resolution=medium")
 
 # Download the data
 river_temp_data <- readr::read_csv(my_url)
@@ -73,33 +77,18 @@ print(citation_note <- as.character(
 river_temp_data <- head(river_temp_data, -3)
 
 # Data wrangling
-# Date
 river_temp_data <- river_temp_data |>
   mutate(date = ymd(str_c(year, `mm-dd`, sep = "-")))
-  
-
 
 # Plot the data
-if(temp_unit == "F") {
-  ggplot(river_temp_data, aes(x = date, y = value)) +
-    geom_line(color = "steelblue", linewidth = 0.75) +
-    geom_point(color = "steelblue", size = 1) + 
-    labs(
-      title = paste("Daily river temperature at", site, "in", year),
-      x = "Date",
-      y = expression(paste("River temperature (", degree, "F)"))
-    ) 
-} else {
-  ggplot(river_temp_data, aes(x = date, y = value)) +
-    geom_line(color = "steelblue", linewidth = 0.75) +
-    geom_point(color = "steelblue", size = 1) + 
-    labs(
-      title = paste("Daily river temperature at", site, "in", year),
-      x = "Date",
-      y = expression(paste("River temperature (", degree, "C)"))
-    ) 
-}
-
+ggplot(river_temp_data, aes(x = date, y = value)) +
+  geom_line(color = "steelblue", linewidth = 0.75) +
+  geom_point(color = "steelblue", size = 1) + 
+  labs(
+    title = paste("Daily river temperature at", site, "in", year),
+    x = "Date",
+    y = paste0("River temperature (\u00B0", temp_unit, ")")
+  )
 
 ```
 
@@ -110,7 +99,7 @@ if(temp_unit == "F") {
 #| message: false
 #| warning: false
 #| code-fold: true
-#| echo: false
+#| code-summary: "Show the code"
 
 # Choose year, site, start and end dates, unit, and create custom query url
 year <- "2025"
@@ -133,25 +122,14 @@ river_temp_data <- river_temp_data |>
   mutate(date = ymd(str_c(year, `mm-dd`, sep = "-")))
 
 # Plot the data
-if(temp_unit == "F") {
-  ggplot(river_temp_data, aes(x = date, y = value)) +
+ggplot(river_temp_data, aes(x = date, y = value)) +
   geom_line(color = "steelblue", linewidth = 0.75) +
   geom_point(color = "steelblue", size = 1) + 
   labs(
     title = paste("Daily river temperature at", site, "in", year),
     x = "Date",
-    y = expression(paste("River temperature (", degree, "F)"))
+    y = paste0("River temperature (\u00B0", temp_unit, ")")
   )
-} else {
-  ggplot(river_temp_data, aes(x = date, y = value)) +
-    geom_line(color = "steelblue", linewidth = 0.75) +
-    geom_point(color = "steelblue", size = 1) + 
-    labs(
-      title = paste("Daily river temperature at", site, "in", year),
-      x = "Date",
-      y = expression(paste("River temperature (", degree, "C)"))
-    )
-}
 
 ```
 
@@ -171,15 +149,15 @@ riv_temp_url_fn <- function(year, site, temp_unit) {
 
 # Pull in data for years 2023, 2024, and 2025
 my_url_2023 <- riv_temp_url_fn(year = "2023", site = "KWK", temp_unit = "F")
-river_temp_data_2023 <-  readr::read_csv(my_url_2023)
+river_temp_data_2023 <- readr::read_csv(my_url_2023)
 river_temp_data_2023 <- head(river_temp_data_2023, -3)
   
 my_url_2024 <- riv_temp_url_fn(year = "2024", site = "KWK", temp_unit = "F")
-river_temp_data_2024 <-  readr::read_csv(my_url_2024)
+river_temp_data_2024 <- readr::read_csv(my_url_2024)
 river_temp_data_2024 <- head(river_temp_data_2024, -3)
 
 my_url_2025 <- riv_temp_url_fn(year = "2025", site = "KWK", temp_unit = "F")
-river_temp_data_2025 <-  readr::read_csv(my_url_2025)
+river_temp_data_2025 <- readr::read_csv(my_url_2025)
 river_temp_data_2025 <- head(river_temp_data_2025, -3)
 
 river_temp_data <- bind_rows(river_temp_data_2023, river_temp_data_2024, river_temp_data_2025)
@@ -193,28 +171,15 @@ river_temp_data <- river_temp_data %>%
          day = yday(date))
 
 # Plot the data
-if(temp_unit == "F") {
-  ggplot(river_temp_data, aes(x = day, y = value, color = year)) +
+ggplot(river_temp_data, aes(x = day, y = value, color = year)) +
   geom_line(linewidth = 0.75)+
   geom_point(size = 0.5) + 
   scale_x_date(date_breaks = "1 month", date_labels = "%b") + 
   labs(
     title = paste("Daily river temperature at", site),
     x = "Date",
-    y = expression(paste("River temperature (", degree, "F)"))
-  ) + scale_color_viridis_d(option = "civids") + theme_bw()
-} else {
-  ggplot(river_temp_data, aes(x = day, y = value, color = year)) +
-    geom_line(linewidth = 0.75)+
-    geom_point(size = 0.5) + 
-    scale_x_date(date_breaks = "1 month", date_labels = "%b") + 
-    labs(
-      title = paste("Daily river temperature at", site),
-      x = "Date",
-      y = expression(paste("River temperature (", degree, "C)"))
-    ) + scale_color_viridis_d(option = "cividis") + theme_bw()
-}
-
+    y = paste0("River temperature (\u00B0", temp_unit, ")")
+  ) + scale_color_viridis_d() + theme_bw()
 ```
 
 ## Multiple Years (facet plots)
@@ -224,7 +189,7 @@ if(temp_unit == "F") {
 #| message: false
 #| warning: false
 #| code-fold: true
-#| echo: false
+#| code-summary: "Show the code"
 
 # Build a function
 riv_temp_url_fn <- function(year, site, temp_unit) {
@@ -253,30 +218,16 @@ river_temp_data <- river_temp_data %>%
          year = factor(year))
 
 # Plot the data
-if(temp_unit == "F") {
-  ggplot(river_temp_data, aes(x = date, y = value, color = factor(year))) +
-    geom_line(color = "steelblue", linewidth = 0.75) +
-    geom_point(color = "steelblue", size = 1) + 
-    facet_wrap(~year, scales = "free", nrow = 3, dir = "v") + 
-    scale_x_date(date_labels = "%b", date_breaks = "1 month") +
-    labs(
-      title = paste("Daily river temperature at", site),
-      x = "Date",
-      y = expression(paste("River temperature (", degree, "F)"))
-    ) + theme(legend.position = "none") 
-} else {
-  ggplot(river_temp_data, aes(x = date, y = value, color = factor(year))) +
-    geom_line(color = "steelblue", linewidth = 0.75) +
-    geom_point(color = "steelblue", size = 1) + 
-    facet_wrap(~year, scales = "free", nrow = 3, dir = "v") + 
-    scale_x_date(date_labels = "%b", date_breaks = "1 month") +
-    labs(
-      title = paste("Daily river temperature at", site),
-      x = "Date",
-      y = expression(paste("River temperature (", degree, "C)"))
-    ) + theme(legend.position = "none")
-} 
-
+ggplot(river_temp_data, aes(x = date, y = value, color = factor(year))) +
+  geom_line(color = "steelblue", linewidth = 0.75) +
+  geom_point(color = "steelblue", size = 1) + 
+  facet_wrap(~year, scales = "free", nrow = 3, dir = "v") + 
+  scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+  labs(
+    title = paste("Daily river temperature at", site),
+    x = "Date",
+    y = paste0("River temperature (\u00B0", temp_unit, ")")
+  ) + theme(legend.position = "none") 
 ```
 
 ## Multiple River Data Sets
@@ -286,7 +237,7 @@ if(temp_unit == "F") {
 #| message: false
 #| warning: false
 #| code-fold: true
-#| echo: false
+#| code-summary: "Show the code"
 
 # Build functions
 riv_temp_url_fn <- function(year, site, temp_unit) {
@@ -306,12 +257,13 @@ riv_dissolved_oxyg_url_fn <- function(year, site) {
 }
 
 # year and location
-year = "2025"
-site = "KWK"
+year <- "2025"
+site <- "KWK"
+temp_unit <- "F"
 
 # Download the river temperature data
 ## build url
-riv_temp_url <- riv_temp_url_fn(year = year, site = site, temp_unit = "F")
+riv_temp_url <- riv_temp_url_fn(year = year, site = site, temp_unit = temp_unit)
 ## download data
 riv_temp_data <- readr::read_csv(riv_temp_url)
 ## read the data Note and then remove from data set
@@ -356,7 +308,7 @@ ggplot(river_data, aes(x = date, y = value)) +
   facet_wrap(~datatype, scales = "free", ncol = 1, nrow = 4,
              strip.position = "left",
              labeller = as_labeller( c(
-               WaterTemperature = "Temperature (degrees C)",
+               WaterTemperature = paste0("Temperature (\u00B0", temp_unit, ")"),
                Flow = "Flow (CFS)", 
                Turbidity = "Turbidity (NTU|FNU)",
                DissolvedOxygen = "Dissolved Oxygen (mg/L)") ) ) + 
@@ -370,7 +322,6 @@ ggplot(river_data, aes(x = date, y = value)) +
     strip.background = element_blank(),
     axis.title.y = element_blank()
   )
-  
 ```
 
 # Fish Data
@@ -382,57 +333,66 @@ ggplot(river_data, aes(x = date, y = value)) +
 #| message: false
 #| warning: false
 #| code-fold: true
-#| echo: false
+#| code-summary: "Show the code"
 
-# Pull in data for years 2024, 2025, and 2026 
-year <- "2026"
+year <- 2025
 location <- "UBC"
-isCumulative <- 0 # 0 for non-cumulative data, 1 for cumulative data
-non_cumulative_url <- paste0("https://www.cbr.washington.edu/sacramento/data/php/rpt/sampling_graph.php?sc=1&outputFormat=csv&year=", year, "&species=CHN%3AWinter&loc=trap%3A", location, "%3A0&cumData=", isCumulative, "&typeData=raw&resolution=medium")
+is_cumulative <- 0 # 0 for non-cumulative data, 1 for cumulative data
+non_cumulative_url <- paste0("https://www.cbr.washington.edu/sacramento/data/php/rpt/sampling_graph.php?sc=1&outputFormat=csv&year=", year, "&species=CHN%3AWinter&loc=trap%3A", location, "%3A0&cumData=", is_cumulative, "&typeData=raw&resolution=medium")
 print(non_cumulative_url)
 
-year <- "2026"
-location <- "UBC"
-isCumulative <- 1 # 0 for non-cumulative data, 1 for cumulative data
-cumulative_url <- paste0("https://www.cbr.washington.edu/sacramento/data/php/rpt/sampling_graph.php?sc=1&outputFormat=csv&year=", year, "&species=CHN%3AWinter&loc=trap%3A", location, "%3A0&cumData=", isCumulative, "&typeData=raw&resolution=medium")
+is_cumulative <- 1 # 0 for non-cumulative data, 1 for cumulative data
+cumulative_url <- paste0("https://www.cbr.washington.edu/sacramento/data/php/rpt/sampling_graph.php?sc=1&outputFormat=csv&year=", year, "&species=CHN%3AWinter&loc=trap%3A", location, "%3A0&cumData=", is_cumulative, "&typeData=raw&resolution=medium")
 
 # Data-cleaning function
-prepare_data <- function(my_url, isCumulative) {
+prepare_data <- function(my_url, is_cumulative) {
   data <- readr::read_csv(my_url)
-  data <- head(data, -7)
-  data <- rename(data, count = 2)
-  data <- data |>
-    mutate(
-      date = ymd(Date),
-      isCumulative = isCumulative
-    )
-  data
+  if (is.data.frame(data) &&
+    nrow(data) > 0 &&
+    ncol(data) >= 2 &&
+    "Date" %in% names(data)) {
+    data <- head(data, -7)
+    # Rename the second column to "count"
+    data <- rename(data, count = 2)
+    data <- data |>
+      mutate(
+        date = ymd(Date),
+        is_cumulative = is_cumulative
+      ) |>
+      filter(!is.na(count))
+    print(data)
+    return(data)
+  } else {
+    return(NULL)
+  }
 }
 
 # Clean the data from each query call
 non_cumulative_data <- prepare_data(non_cumulative_url, 0)
 cumulative_data <- prepare_data(cumulative_url, 1)
-
-# Combine rows into a single data frame
-upper_battle_creek_data <- bind_rows(non_cumulative_data, cumulative_data)
-
-# Plot the data
-ggplot(upper_battle_creek_data, aes(
-    x = date,
-    y = count,
-    color = factor(isCumulative, levels = c(0, 1), labels = c("Non-cumulative", "Cumulative"))
-  )) +
-  geom_line(linewidth = 0.75) +
-  geom_point(size = 1) +
-  scale_x_date(date_labels = "%b %d", date_breaks = "1 week", date_minor_breaks = "1 day") +
-  labs(
-    title = paste("Winter Chinook, Upper Battle Creek RST"),
-    x = "Date",
-    y = "Raw catch",
-    color = NULL
-  )
-
-
+if (is.null(non_cumulative_data) || is.null(cumulative_data)) {
+  print(paste("Data missing when plotting non-cumulative and cumulative plot for year =", year, "and location =", location))
+} else {
+  # Combine rows into a single data frame
+  upper_battle_creek_data <- bind_rows(non_cumulative_data, cumulative_data)
+  
+  # Plot the data
+  ggplot(upper_battle_creek_data, aes(
+      x = date,
+      y = count,
+      color = factor(is_cumulative, levels = c(0, 1), labels = c("Non-cumulative", "Cumulative"))
+    )) +
+    geom_line(linewidth = 0.75) +
+    geom_point(size = 1) +
+    scale_x_date(date_labels = "%b %d", date_breaks = "1 month", date_minor_breaks = "1 day") +
+    scale_color_viridis_d() +
+    labs(
+      title = paste("Winter Chinook, Upper Battle Creek RST"),
+      x = "Date",
+      y = "Raw catch",
+      color = NULL
+    )
+}
 ```
 
 ## Trawl
@@ -442,11 +402,88 @@ ggplot(upper_battle_creek_data, aes(
 #| message: false
 #| warning: false
 #| code-fold: true
-#| echo: false
+#| code-summary: "Show the code"
+
+assemble_url <- function(water_year, species_code, loc_code) {
+  paste0("https://www.cbr.washington.edu/sacramento/data/php/rpt/sampling_graph.php?sc=1&outputFormat=csv&year=", water_year, "&species=", species_code, "&loc=", loc_code, "&typeData=raw&resolution=medium")
+}
+
+fetch_and_clean_data <- function(water_year, species_code, loc_code, loc_name) {
+  url <- assemble_url(water_year = water_year, species_code = species_code, loc_code = loc_code)
+  data <- readr::read_csv(url) |> mutate(date = ymd(Date))
+  # Chipps Island data "year" means calendar year (whereas Mossdale data "year"
+  # means water year) so to make them consistent with each other, we need to
+  # assemble both halves of the water year for Chipps Island data.
+  if (loc_name == "Chipps Island") {
+    # October 1st is the start of a new water year
+    first_year <- water_year
+    oct_thru_dec_data <- data |> filter(date >= make_date(first_year, 10, 1))
+    second_year <- water_year + 1
+    jan_thru_sept_url <- assemble_url(water_year = second_year, species_code = species_code, loc_code = loc_code)
+    jan_thru_sept_data <- readr::read_csv(jan_thru_sept_url) |> mutate(date = ymd(Date)) |> filter(date < make_date(second_year, 10, 1))
+    data <- bind_rows(oct_thru_dec_data, jan_thru_sept_data)
+  }
+  if (is.data.frame(data) &&
+    nrow(data) > 0 &&
+    ncol(data) >= 3 &&
+    "Date" %in% names(data)) {
+      # Remove metadata at the bottom of the CSV
+      data <- head(data, -6)
+      # Rename the second column to "count"
+      data <- rename(data, count = 2)
+      data <- data |>
+        mutate(location = loc_name,
+               water_year = water_year) |>
+        filter(!is.na(count)) |>
+        # Remove the third column (sample counts)
+        select(-3) |>
+        select(-Date)
+      return(data)
+  } else {
+    print(paste("Data not available for year =", year, "and location =", loc_name))
+    return(NULL)
+  }
+}
+
+# Collate data
+collate_data <- function(water_years, species_code) {
+  all_data <- data.frame()
+  for (water_year in water_years) {
+    mossdale_data <- fetch_and_clean_data(water_year = water_year, species_code = species_code, loc_code = "trawl%3ASJ054%3A1", loc_name = "Mossdale")
+    if (!is.null(mossdale_data)) {
+      all_data <- bind_rows(all_data, mossdale_data)
+    }
+    chipps_island_data <- fetch_and_clean_data(water_year = water_year, species_code = species_code, loc_code = "trawl%3ASB018%3A1", loc_name = "Chipps Island")
+    if (!is.null(chipps_island_data)) {
+      all_data <- bind_rows(all_data, chipps_island_data)
+    }
+  }
+  return(all_data)
+}
 
 
+plot_data <- function(water_years, species_code) {
+  all_data <- collate_data(water_years, species_code)
+  if (nrow(all_data) > 0) {
+    ggplot(all_data, aes(x = date, y = count, color = location)) +
+      geom_line(linewidth = 0.75) +
+      geom_point(size = 1) +
+      facet_wrap(~water_year, scales = "free", nrow = 3, dir = "v") +
+      scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+      labs(
+        title = paste("Raw trawl counts at Mossdale and Chipps Island"),
+        x = "Date",
+        y = "Raw counts",
+        color = "Location"
+      ) +
+      scale_color_viridis_d()
+  }
+}
 
-
+# Configure parameters manually
+water_years <- 2023:2025
+species_code <- "CHN%3AAll"
+plot_data(water_years = water_years, species_code = species_code)
 ```
 
 ## Loss and Salvage
@@ -456,11 +493,34 @@ ggplot(upper_battle_creek_data, aes(
 #| message: false
 #| warning: false
 #| code-fold: true
-#| echo: false
+#| code-summary: "Show the code"
 
+year <- 2025
+species_code <- "1%3Aall"
+url <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/juv_loss_detail.php?sc=1&outputFormat=csv&year=", year, "&species=", species_code, "&dnaOnly=no&age=no")
+data <- readr::read_csv(url)
+# Should I include data from 2024? Separate further by location? By species?
 
+loss_and_salvage_data <- data |>
+  mutate(date = as_date(ymd_hms(`Sample Time`))) |>
+  select(c(date, `Expanded Salvage`, `Loss`)) |>
+  group_by(date) |>
+  summarise(total_salvage = sum(`Expanded Salvage`), total_loss = sum(Loss)) |>
+  pivot_longer(cols = c(total_salvage, total_loss),
+               names_to = "type",
+               values_to = "count")
 
-
+  ggplot(loss_and_salvage_data, aes(x = date, y = count, color = type)) +
+        geom_line(linewidth = 0.75) +
+        geom_point(size = 1) +
+        scale_x_date(date_labels = "%b", date_breaks = "1 month") +
+        labs(
+          title = paste("2025 Loss and Salvage at Delta Fish Facilities"),
+          x = "Date",
+          y = "Expanded counts",
+          color = "Data type",
+        ) +
+        scale_color_viridis_d()
 ```
 
 ## JPE
@@ -470,11 +530,24 @@ ggplot(upper_battle_creek_data, aes(
 #| message: false
 #| warning: false
 #| code-fold: true
-#| echo: false
+#| code-summary: "Show the code"
 
+url <- "https://cbr.washington.edu/sacramento/data/php/rpt/jpe.php?sc=1&year=all"
+# The source data is tab-delimited, so use `read_tsv()`
+data <- readr::read_tsv(url) |> filter(metric == "Total natural production entering the Delta" | metric == "Total LSNFH production entering the Delta") |> select(c(brood_year, value, metric))
 
-
-
+ggplot(data, aes(x = brood_year, y = value, fill = metric)) +
+  geom_col() +
+  scale_fill_discrete(
+    name = "Origin",
+    breaks = c("Total LSNFH production entering the Delta", "Total natural production entering the Delta"),
+    labels = c("Hatchery", "Natural")
+  ) +
+  scale_y_continuous(labels = scales::label_comma()) +
+  labs(title = "Juvenile Production Estimate (JPE) Winter-run Chinook: Natural vs. Hatchery",
+       x = "Year",
+       y = "Count Estimate") +
+  scale_fill_viridis_d()
 ```
 
 ## Aerial and Carcass Surveys
@@ -484,9 +557,18 @@ ggplot(upper_battle_creek_data, aes(
 #| message: false
 #| warning: false
 #| code-fold: true
-#| echo: false
+#| code-summary: "Show the code"
 
+url <- "https://cbr.washington.edu/sacramento/data/php/rpt/redd_aerial.php?sc=1&outputFormat=csv&year=all&run=all&section=all"
+data <- readr::read_csv(url) |> mutate(year = year(ymd(date))) |> group_by(year, reach) |> summarise(count = sum(reddcount)) |> filter(!is.na(reach))
+# Separate further by run?
+# Didn't do carcass because I don't know the right URL...
 
-
-
+ggplot(data, aes(x = year, y = count, fill = reach)) +
+  geom_col() +
+  scale_y_continuous(labels = scales::label_comma()) +
+  labs(title = "Aerial Survey Chinook Redd Counts",
+       x = "Year",
+       y = "Count") +
+  scale_fill_viridis_d(name = "Reach")
 ```

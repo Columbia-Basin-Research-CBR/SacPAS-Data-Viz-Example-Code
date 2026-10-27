@@ -1,0 +1,45 @@
+---
+title: "Meeting Agenda Template"
+format: html
+editor: visual
+params:
+  year: 2025
+embed-resources: true
+---
+
+This agenda requires background knowledge on `r params$year` water temperature data from Shasta Dam to Wilkins Slough.
+
+## Background
+
+```{r}
+#| message: false
+#| warning: false
+#| code-fold: true
+#| code-summary: "Show the code"
+
+# Display "wtemp" (Water Temperature F, Daily Average),
+# "wtemp7dadm" (Water Temperature F, 7DADM),
+# "flow" (Flow TCFS, Daily Average), or
+# "turbidity" (Turbidity NTU, Daily Average)
+param <- "wtemp"
+# Group colors by "data" (Value),
+# "targets" (Temperature Targets 56, 57, 58F), or
+# "targets2017" (Temperature Targets 53, 55, 56F)
+grouping_type <- "data"
+
+img_url <- paste0(
+  "https://cbr.washington.edu/sacramento/data/php/rpt/basin_cond.php",
+  "?sc=1",
+  "&outputFormat=graph",
+  "&basin=sacramento",
+  "&year=", params$year,
+  "&wparam=", param,
+  "&gtype=", grouping_type,
+  "&resolution=medium"
+)
+knitr::include_graphics(img_url)
+```
+
+## Agenda
+
+(Agenda details go here.)
