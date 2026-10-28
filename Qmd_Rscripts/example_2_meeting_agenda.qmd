@@ -1,0 +1,41 @@
+---
+title: "Example 2 Meeting Agenda"
+format: pdf
+editor: visual
+---
+
+This agenda requires background knowledge on daily average water temperature data from Shasta Dam to Wilkins Slough.
+
+## Background
+
+(Background text goes here.)
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| fig-align: center
+#| out-width: "80%"
+
+year <- 2024
+
+param <- "wtemp" # Options are: "wtemp" (Water Temperature F, Daily Average), "wtemp7dadm" (Water Temperature F, 7DADM), "flow" (Flow TCFS, Daily Average), or "turbidity" (Turbidity NTU, Daily Average)
+
+grouping_type <- "data" # Options are "data" (Value), "targets" (Temperature Targets 56, 57, 58F), or "targets2017" (Temperature Targets 53, 55, 56F)
+
+img_url <- paste0(
+  "https://cbr.washington.edu/sacramento/data/php/rpt/basin_cond.php",
+  "?sc=1",
+  "&outputFormat=graph",
+  "&basin=sacramento",
+  "&year=", year,
+  "&wparam=", param,
+  "&gtype=", grouping_type,
+  "&resolution=medium"
+)
+knitr::include_graphics(img_url)
+```
+
+## Agenda
+
+(Agenda details go here.)

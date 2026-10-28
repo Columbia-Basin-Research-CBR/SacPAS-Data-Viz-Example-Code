@@ -499,7 +499,6 @@ year <- 2025
 species_code <- "1%3Aall"
 url <- paste0("https://cbr.washington.edu/sacramento/data/php/rpt/juv_loss_detail.php?sc=1&outputFormat=csv&year=", year, "&species=", species_code, "&dnaOnly=no&age=no")
 data <- readr::read_csv(url)
-# Should I include data from 2024? Separate further by location? By species?
 
 loss_and_salvage_data <- data |>
   mutate(date = as_date(ymd_hms(`Sample Time`))) |>
@@ -550,10 +549,10 @@ ggplot(data, aes(x = brood_year, y = value, fill = metric)) +
   scale_fill_viridis_d()
 ```
 
-## Aerial and Carcass Surveys
+## Aerial Redds Surveys
 
 ```{r}
-#| label: fish-aerial-carcass
+#| label: fish-aerial-redds
 #| message: false
 #| warning: false
 #| code-fold: true
@@ -561,8 +560,6 @@ ggplot(data, aes(x = brood_year, y = value, fill = metric)) +
 
 url <- "https://cbr.washington.edu/sacramento/data/php/rpt/redd_aerial.php?sc=1&outputFormat=csv&year=all&run=all&section=all"
 data <- readr::read_csv(url) |> mutate(year = year(ymd(date))) |> group_by(year, reach) |> summarise(count = sum(reddcount)) |> filter(!is.na(reach))
-# Separate further by run?
-# Didn't do carcass because I don't know the right URL...
 
 ggplot(data, aes(x = year, y = count, fill = reach)) +
   geom_col() +

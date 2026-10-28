@@ -1,0 +1,27 @@
+---
+title: "Example 1 Meeting Agenda"
+format: pdf
+editor: visual
+embed-resources: true
+---
+
+This agenda requires background knowledge on current catch of juvenile unclipped Chinook salmon.
+
+## Background
+
+(Background text goes here.)
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| fig-align: center
+#| out-width: "50%"
+
+img_url <- "https://www.cbr.washington.edu/sacramento/data/graphics/currcatch_CHN_Winter.png"
+knitr::include_graphics(img_url)
+```
+
+## Agenda
+
+(Agenda details go here.)
